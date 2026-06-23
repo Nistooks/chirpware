@@ -1,6 +1,6 @@
 from pygame.mixer import Sound, init
 from io import BytesIO
-from random import random
+from random import random, randint
 from os import path
 from PIL import Image
 from PIL.ImageFile import ImageFile
@@ -15,14 +15,14 @@ RAILGUN_SFX: bytes = b'\xff\xfb\x90\xc0\x00\x00\x00\x00\x01,\x14\x00\x00\x02\xfc
 sfx_list: list[bytes] = [CHIRP_SFX, RAILGUN_SFX]
 
 running: bool = True
+paused: bool = False
 offset: int = 600
 stop_event: Event = Event()
-frequencies: list[str] = ["1 min", "5 min", "10 min", "15 min", "20 min", "30 min", "1 hour"]
+frequencies: list[str] = ["Random", "1 min", "5 min", "15 min", "30 min", "1 hour"]
 selected_frequency: str = frequencies[0]
 
 def play_sound():
-    sound_idx: int = 1 if random() * 2 < 0.5 else 0
-    random()
+    sound_idx: int = randint(0, 1)
     sound: Sound = Sound(BytesIO(sfx_list[sound_idx]))
     sound.play()
     stop_event.wait(sound.get_length())
@@ -54,23 +54,25 @@ def frequency_select() -> None:
     
     match selected_frequency: # it had to be done this bs f if f == way because python doesnt allow indexing in cases
         case f if f == frequencies[0]:
+            offset = int((random() ** 1.35) * 300) # random offset slightly skewed towards being more common
+        case f if f == frequencies[1]: # 1 min
             offset = 60
-        case f if f == frequencies[1]:
+        case f if f == frequencies[2]: # 5 min
             offset = 300
-        case f if f == frequencies[2]:
-            offset = 600
-        case f if f == frequencies[3]:
+        case f if f == frequencies[3]: # 15 min
             offset = 900
-        case f if f == frequencies[4]:
-            offset = 1200
-        case f if f == frequencies[5]:
+        case f if f == frequencies[4]: # 30 min
             offset = 1800
-        case f if f == frequencies[6]:
+        case f if f == frequencies[5]: # 1 hr
             offset = 3600
         case _:
             print("ERROR in selecting frequency")
             return
         
+def pause() -> None:
+    global paused
+    paused = not paused
+    stop_event.set()
     
 # i typed half the stuff and didnt type the other because pystray has wonderful typing...
 # i also get that maybe its stupid to init pygame's audio mixer just for playing sounds but i really
@@ -82,7 +84,14 @@ if __name__ == "__main__":
     
     
     # the * is needed to 'unpack' the list (pystray doesnt accept raw lists for some reason)
-    frequency: Menu = Menu(*[
+    frequency: Menu = Menu(
+        MenuItem(
+            "Disabled",
+            pause,
+            checked=lambda item: paused,
+        ),
+        Menu.SEPARATOR,
+        *[
         MenuItem(
             frequencies[i], 
             partial(set_active_freq, frequency_str=frequencies[i]),
@@ -102,6 +111,7 @@ if __name__ == "__main__":
     
     while running:
         while not stop_event.is_set():
+            if paused: stop_event.wait() # block till resumed
             print(offset * 0.9 + (offset * 0.1 * random()))
             stop_event.wait(offset * 0.9 + (offset * 0.1 * random()))
             play_sound()
