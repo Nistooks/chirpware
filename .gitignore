@@ -2,3 +2,5 @@ build/
 dist/
 main.spec
 icon.ico
+convert.py
+output.py
