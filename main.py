@@ -1,6 +1,6 @@
 from pygame.mixer import Sound, init
 from io import BytesIO
-from random import random, randint
+from random import random, choices
 from os import path
 from PIL import Image
 from PIL.ImageFile import ImageFile
@@ -22,7 +22,7 @@ frequencies: list[str] = ["Random", "1 min", "5 min", "15 min", "30 min", "1 hou
 selected_frequency: str = frequencies[0]
 
 def play_sound():
-    sound_idx: int = randint(0, 1)
+    sound_idx: int = choices([0, 1], weights=[90, 10])[0]
     sound: Sound = Sound(BytesIO(sfx_list[sound_idx]))
     sound.play()
     stop_event.wait(sound.get_length())
@@ -67,6 +67,7 @@ def frequency_select() -> None:
             offset = 3600
         case _:
             print("ERROR in selecting frequency")
+            offset = 
             return
         
 def pause() -> None:
@@ -101,7 +102,7 @@ if __name__ == "__main__":
     ])
     
     frequency_parent: MenuItem = MenuItem("Select frequency", frequency)
-    title_item: MenuItem = MenuItem("Chirpware v1.0", None, enabled=False)
+    title_item: MenuItem = MenuItem("Chirpware v1.1", None, enabled=False)
     menu: Menu = Menu(title_item, Menu.SEPARATOR, frequency_parent, MenuItem("Quit", quit))
     app = Icon("Chirpware", icon, "Chirpware", menu)
     
