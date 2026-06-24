@@ -1,6 +1,7 @@
 build/
 dist/
-main.spec
+*.spec
 icon.ico
 convert.py
 output.py
+test.py
